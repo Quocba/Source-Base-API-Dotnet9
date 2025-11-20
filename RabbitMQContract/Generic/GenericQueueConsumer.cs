@@ -4,6 +4,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RabbitMQContract.Generic.Request;
 using RabbitMQContract.Payload.Request;
 using System;
 using System.Linq;

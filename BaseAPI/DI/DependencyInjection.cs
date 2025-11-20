@@ -30,7 +30,8 @@
     using Serilog.Sinks.Discord;
     using System;
     using System.Text;
-
+    using System.Threading.RateLimiting;
+#pragma warning disable
     public class DependencyInjection
     {
         public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor)
@@ -96,9 +97,6 @@
 
             #endregion
 
-            #region Common Configuration
-            #endregion
-
             #region Email Settings
             services.Configure<SendMailConfig>(configuration.GetSection("EmailSettings"));
             services.AddScoped<IEmailSender, EmailSender>();
@@ -153,6 +151,22 @@
 
             #region UNIT OF WORK
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            #endregion
+
+            #region RATE LIMIT
+            services.AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString(),
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromSeconds(1),
+                            QueueLimit = 100,
+                            AutoReplenishment = true
+                        }));
+            });
             #endregion
 
         }

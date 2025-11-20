@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RabbitMQContract.Payload.Request
+namespace RabbitMQContract.Generic.Request
 {
     public class GenericQueueMessage
     {

@@ -2,7 +2,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RabbitMQContract.Payload.Request;
+using RabbitMQContract.Generic;
 using System;
 using System.Text.Json;
 
