@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.10.1" />
     <PackageReference Include="Scalar.AspNetCore.Microsoft" Version="2.10.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
@@ -20,6 +21,7 @@
     <ProjectReference Include="..\EmailService\EmailService.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\RabbitMQContract\RabbitMQContract.csproj" />
+    <ProjectReference Include="..\RedisService\RedisService.csproj" />
   </ItemGroup>
 
 </Project>

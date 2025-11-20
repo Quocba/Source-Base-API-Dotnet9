@@ -25,9 +25,12 @@
     using RabbitMQContract.Config;
     using RabbitMQContract.Consumer;
     using RabbitMQContract.Consumer.Email;
+    using RedisService.IService;
+    using RedisService.Service;
     using Serilog;
     using Serilog.Events;
     using Serilog.Sinks.Discord;
+    using StackExchange.Redis;
     using System;
     using System.Text;
     using System.Threading.RateLimiting;
@@ -168,6 +171,22 @@
                         }));
             });
             #endregion
+
+            #region REDIS
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var redisConnectionString = configuration.GetSection("Redis:ConnectionString").Value;
+
+                var options = ConfigurationOptions.Parse(redisConnectionString);
+                options.AbortOnConnectFail = false;
+                return ConnectionMultiplexer.Connect(options);
+            });
+
+            services.AddScoped<IRedisService, RedisServices>();
+
+            #endregion
+
 
         }
     }
