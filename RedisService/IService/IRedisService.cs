@@ -1,16 +1,16 @@
-﻿using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace RedisService.IService
 {
     public interface IRedisService
     {
-        Task<string?> GetAsync(string key);
-        Task SetAsync(string key, string value, TimeSpan expiry);
+        Task<T?> GetAsync<T>(string key);
+        Task SetAsync<T>(string key, T value, TimeSpan expiry);
         Task RemoveAsync(string key);
+
+        Task<T?> GetAsync<T>(Enum cacheKey);
+        Task SetAsync<T>(Enum cacheKey, T value, TimeSpan expiry);
+        Task RemoveAsync(Enum cacheKey);
     }
 }

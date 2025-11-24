@@ -1,54 +1,102 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RedisService.IService;
-using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using RedisService.Enums;
 
 namespace BaseAPI.Controllers
 {
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController(IRedisService _redisService, ILogger<WeatherForecastController> _logger) : ControllerBase
+    public class ProductController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
+        private readonly IRedisService _redisService;
+
+        private static List<Product> _productList = new List<Product>
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            new Product { Id = 1, Name = "Apple", Price = 10 },
+            new Product { Id = 2, Name = "Banana", Price = 20 },
+            new Product { Id = 3, Name = "Orange", Price = 15 },
         };
 
-
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
+        public ProductController(IRedisService redisService)
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            _redisService = redisService;
         }
 
-        [HttpPost("set")]
-        public async Task<IActionResult> Set([FromQuery] string key, [FromQuery] string value, [FromQuery] int expirySeconds = 300)
+       
+        [HttpGet("getProducts")]
+        public async Task<IActionResult> GetProducts()
         {
-            var expiry = TimeSpan.FromSeconds(expirySeconds); 
-            await _redisService.SetAsync(key, value, expiry);
-            return Ok($"Key '{key}' set successfully with expiry {expirySeconds} seconds.");
+            var cached = await _redisService.GetAsync<List<Product>>(CacheObjectEnum.Products);
+            if (cached != null)
+                return Ok(new { Source = "Cache", Data = cached });
+
+            var products = _productList.ToList();
+
+            await _redisService.SetAsync(CacheObjectEnum.Products, products, TimeSpan.FromMinutes(10));
+
+            return Ok(new { Source = "MemoryList", Data = products });
         }
 
-        [HttpGet("get")]
-        public async Task<IActionResult> Get([FromQuery] string key)
+    
+        [HttpGet("{id:int}")]
+        public IActionResult GetProduct(int id)
         {
-            var value = await _redisService.GetAsync(key);
-            if (value is null)
-                return NotFound($"Key '{key}' not found.");
-            return Ok(value);
+            var product = _productList.FirstOrDefault(p => p.Id == id);
+            if (product == null) return NotFound();
+            return Ok(product);
         }
 
-        [HttpDelete("delete")]
-        public async Task<IActionResult> Delete([FromQuery] string key)
+
+        [HttpPost("addProduct")]
+        public async Task<IActionResult> AddProduct([FromBody] Product newProduct)
         {
-            await _redisService.RemoveAsync(key);
-            return Ok($"Key '{key}' deleted successfully.");
+            int newId = _productList.Any() ? _productList.Max(p => p.Id) + 1 : 1;
+            newProduct.Id = newId;
+            _productList.Add(newProduct);
+
+            await _redisService.RemoveAsync(CacheObjectEnum.Products);
+
+            return Ok(new { Message = "Product added", Product = newProduct });
         }
 
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product updateProduct)
+        {
+            var product = _productList.FirstOrDefault(p => p.Id == id);
+            if (product == null) return NotFound();
+
+            product.Name = updateProduct.Name;
+            product.Price = updateProduct.Price;
+
+            await _redisService.RemoveAsync(CacheObjectEnum.Products);
+
+            return Ok(new { Message = "Product updated", Product = product });
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var product = _productList.FirstOrDefault(p => p.Id == id);
+            if (product == null) return NotFound();
+
+            _productList.Remove(product);
+
+            await _redisService.RemoveAsync(CacheObjectEnum.Products);
+
+            return Ok(new { Message = "Product deleted", ProductId = id });
+        }
     }
 }

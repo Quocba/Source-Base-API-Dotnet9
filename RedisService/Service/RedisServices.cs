@@ -1,9 +1,7 @@
 ﻿using RedisService.IService;
 using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace RedisService.Service
@@ -11,13 +9,26 @@ namespace RedisService.Service
     public class RedisServices : IRedisService
     {
         private readonly IDatabase _db;
+
         public RedisServices(IConnectionMultiplexer conn)
         {
-            _db = conn.GetDatabase();   
+            _db = conn.GetDatabase();
         }
-        public async Task<string?> GetAsync(string key)
+
+        // =================
+        // Base methods
+        // =================
+        public async Task SetAsync<T>(string key, T value, TimeSpan expiry)
         {
-            return await _db.StringGetAsync(key);
+            var json = JsonSerializer.Serialize(value);
+            await _db.StringSetAsync(key, json, expiry);
+        }
+
+        public async Task<T?> GetAsync<T>(string key)
+        {
+            var json = await _db.StringGetAsync(key);
+            if (json.IsNullOrEmpty) return default;
+            return JsonSerializer.Deserialize<T>(json);
         }
 
         public async Task RemoveAsync(string key)
@@ -25,11 +36,25 @@ namespace RedisService.Service
             await _db.KeyDeleteAsync(key);
         }
 
-
-        public async Task SetAsync(string key, string value, TimeSpan expiry)
+        // =================
+        // Overload Enum
+        // =================
+        public async Task SetAsync<T>(Enum cacheKey, T value, TimeSpan expiry)
         {
-            await _db.StringSetAsync(key, value, expiry);
+            string key = cacheKey.ToString().ToLower();
+            await SetAsync(key, value, expiry);
         }
 
+        public async Task<T?> GetAsync<T>(Enum cacheKey)
+        {
+            string key = cacheKey.ToString().ToLower();
+            return await GetAsync<T>(key);
+        }
+
+        public async Task RemoveAsync(Enum cacheKey)
+        {
+            string key = cacheKey.ToString().ToLower();
+            await RemoveAsync(key);
+        }
     }
 }
