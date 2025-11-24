@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Context
@@ -13,6 +14,7 @@ namespace Infrastructure.Context
         {
         }
 
+        public virtual DbSet<Products> Products { get; set;  }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

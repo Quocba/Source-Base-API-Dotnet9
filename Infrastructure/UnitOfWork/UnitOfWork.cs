@@ -1,44 +1,64 @@
 ﻿using Application.IGenericRepository;
 using Application.IUnitOfWork;
-using Infrastructure.Context;
 using Infrastructure.GenericRepository;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.UnitOfWork
+namespace Infrastructure.UnitOfWork;
+
+public class UnitOfWork<TContext> : IUnitOfWork<TContext> where TContext : DbContext
 {
-    public class UnitOfWork : IUnitOfWork
+    public TContext Context { get; }
+    private readonly Dictionary<Type, object> _repositories = new();
+    private IDbContextTransaction? _currentTransaction;
+
+    public UnitOfWork(TContext context)
     {
-        private readonly DBContext _context;
-        private readonly ConcurrentDictionary<Type, object> _repositories = new();
-        public UnitOfWork(DBContext context)
-        {
-            _context = context;
-        }
+        Context = context;
+    }
 
-        public IGenericRepository<T> Repository<T>() where T : class
-        {
-            if (!_repositories.ContainsKey(typeof(T)))
-            {
-                var repoInstance = new GenericRepository<T>(_context);
-                _repositories.TryAdd(typeof(T), repoInstance);
-            }
+    public IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class
+    {
+        var type = typeof(TEntity);
+        if (_repositories.TryGetValue(type, out var repo))
+            return (IGenericRepository<TEntity>)repo;
 
-            return (IGenericRepository<T>)_repositories[typeof(T)];
-        }
+        var repository = new GenericRepository<TEntity>(Context); 
+        _repositories[type] = repository;
+        return repository;
+    }
 
-        public async Task<int> CompleteAsync()
-        {
-            return await _context.SaveChangesAsync();
-        }
+    public int Commit()
+    {
+        TrackChanges();
+        return Context.SaveChanges();
+    }
 
-        public void Dispose()
+    public async Task<int> CommitAsync()
+    {
+        TrackChanges();
+        return await Context.SaveChangesAsync();
+    }
+
+    private void TrackChanges()
+    {
+        var errors = Context.ChangeTracker.Entries<IValidatableObject>()
+            .SelectMany(e => e.Entity.Validate(null))
+            .Where(e => e != ValidationResult.Success)
+            .ToArray();
+
+        if (errors.Any())
         {
-            _context.Dispose();
+            var msg = string.Join(Environment.NewLine,
+                errors.Select(e => $"Properties {string.Join(",", e.MemberNames)} Error: {e.ErrorMessage}"));
+            throw new Exception(msg);
         }
+    }
+
+    public void Dispose()
+    {
+        _currentTransaction?.Dispose();
+        Context?.Dispose();
     }
 }

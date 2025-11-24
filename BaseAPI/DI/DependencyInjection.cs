@@ -12,6 +12,7 @@
     using EmailService.Config;
     using EmailService.Implement;
     using EmailService.Interface;
+    using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.GenericRepository;
     using Infrastructure.Service;
@@ -54,38 +55,42 @@
 
             #endregion
 
-           #region Serilog Config
-          //  services.AddSerilog();
+            #region Serilog Config
+            services.AddSerilog();
 
-          //  var webHookId = configuration["Discord:WebHookId"];
-          //  var webHookToken = configuration["Discord:WebHookToken"];
+            var webHookId = configuration["Discord:WebHookId"];
+            var webHookToken = configuration["Discord:WebHookToken"];
 
-          //  var hookId = configuration["DiscordChangeDataLog:HookID"];
-          //  var hookToken = configuration["DiscordChangeDataLog:HookToken"];
+            var hookId = configuration["DiscordChangeDataLog:HookID"];
+            var hookToken = configuration["DiscordChangeDataLog:HookToken"];
 
 
-          //  Log.Logger = new LoggerConfiguration()
-          //  .MinimumLevel.Debug()
-          //  .WriteTo.Console()
-
-          //  .WriteTo.Discord(
-          //    webhookId: ulong.Parse(webHookId),
-          //    webhookToken: webHookToken,
-          //    restrictedToMinimumLevel: LogEventLevel.Error
-          //  )
-
-          //  .WriteTo.Logger(lc => lc
-          //  .Filter.ByIncludingOnly(le =>
-          //  le.Level == LogEventLevel.Information &&
-          //  le.MessageTemplate.Text.Contains("🧑‍💻"))
-
-          //    .WriteTo.Discord(
-          //        webhookId: ulong.Parse(hookId),
-          //        webhookToken: hookToken
-          //    )
-          //)
-
-          //.CreateLogger();
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+                )
+                .WriteTo.File(
+                    path: "Logs/log-.txt",
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    restrictedToMinimumLevel: LogEventLevel.Information
+                )
+                .WriteTo.Discord(
+                    webhookId: ulong.Parse(webHookId),
+                    webhookToken: webHookToken,
+                    restrictedToMinimumLevel: LogEventLevel.Error
+                )
+                .WriteTo.Logger(lc => lc
+                    .Filter.ByIncludingOnly(le =>
+                        le.Level == LogEventLevel.Information &&
+                        le.MessageTemplate.Text.Contains("🧑‍💻"))
+                    .WriteTo.Discord(
+                        webhookId: ulong.Parse(hookId),
+                        webhookToken: hookToken
+                    )
+                )
+                .CreateLogger();
 
             #endregion
 
@@ -153,7 +158,7 @@
             #endregion
 
             #region UNIT OF WORK
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
             #endregion
 
             #region RATE LIMIT
@@ -184,11 +189,9 @@
             services.AddScoped<IRedisService, RedisServices>();
             #endregion
 
-
             #region Google Drive Configuration
             services.AddScoped<IGoogleDriveService, GoogleDriveService>();
             #endregion
-
 
         }
     }

@@ -1,15 +1,14 @@
 ﻿using Application.IGenericRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
-namespace Application.IUnitOfWork
+namespace Application.IUnitOfWork;
+
+public interface IUnitOfWork<TContext> : IDisposable where TContext : DbContext
 {
-    public interface IUnitOfWork
-    {
-        IGenericRepository<T> Repository<T>() where T : class;
-        Task<int> CompleteAsync();
-    }
+    TContext Context { get; }
+
+    IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class;
+
+    int Commit();
+    Task<int> CommitAsync();
 }
