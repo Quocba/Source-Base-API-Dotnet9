@@ -18,46 +18,46 @@ public static class JWTService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public static string GenerateToken(User user)
-    {
-        var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.Username),
-    };
+    //public static string GenerateToken(User user)
+    //{
+    //    var claims = new List<Claim>
+    //{
+    //    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+    //    new Claim(ClaimTypes.Name, user.Username),
+    //};
 
-        if (user.UserTypeNavigation != null)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, user.UserTypeNavigation.Name));
-        }
+    //    if (user.UserTypeNavigation != null)
+    //    {
+    //        claims.Add(new Claim(ClaimTypes.Role, user.UserTypeNavigation.Name));
+    //    }
 
-        if (user.Employee.Department.DepartmentPermission != null && user.Employee.Department.DepartmentPermission.Any())
-        {
-            var allowedPermissions = user?.Employee?.Department?.DepartmentPermission?
-                .Where(dp => dp.IsAllow && dp.Permissions != null)
-                .Select(dp => $"{NormalizePermissionKey(dp.Permissions.Module)}.{dp.Permissions.Action.ToUpperInvariant()}")
-                .ToList() ?? new List<string>();
+    //    if (user.Employee.Department.DepartmentPermission != null && user.Employee.Department.DepartmentPermission.Any())
+    //    {
+    //        var allowedPermissions = user?.Employee?.Department?.DepartmentPermission?
+    //            .Where(dp => dp.IsAllow && dp.Permissions != null)
+    //            .Select(dp => $"{NormalizePermissionKey(dp.Permissions.Module)}.{dp.Permissions.Action.ToUpperInvariant()}")
+    //            .ToList() ?? new List<string>();
 
-            if (allowedPermissions.Any())
-            {
-                claims.Add(new Claim("permission_count", allowedPermissions.Count.ToString()));
-                claims.Add(new Claim("permissions", string.Join(",", allowedPermissions)));
-            }
-        }
+    //        if (allowedPermissions.Any())
+    //        {
+    //            claims.Add(new Claim("permission_count", allowedPermissions.Count.ToString()));
+    //            claims.Add(new Claim("permissions", string.Join(",", allowedPermissions)));
+    //        }
+    //    }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+    //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken(
-            issuer: _jwtSettings.Issuer,
-            audience: _jwtSettings.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
-            signingCredentials: creds
-        );
+    //    var token = new JwtSecurityToken(
+    //        issuer: _jwtSettings.Issuer,
+    //        audience: _jwtSettings.Audience,
+    //        claims: claims,
+    //        expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
+    //        signingCredentials: creds
+    //    );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
+    //    return new JwtSecurityTokenHandler().WriteToken(token);
+    //}
 
     private static string NormalizePermissionKey(string module)
     {

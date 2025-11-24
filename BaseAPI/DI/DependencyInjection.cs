@@ -37,7 +37,7 @@
 #pragma warning disable
     public class DependencyInjection
     {
-        public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor)
+        public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
             #region Service Configuration
             services.AddScoped<IBaseService, BaseService>();
@@ -54,38 +54,38 @@
 
             #endregion
 
-            #region Serilog Config
-            services.AddSerilog();
+           #region Serilog Config
+          //  services.AddSerilog();
 
-            var webHookId = configuration["Discord:WebHookId"];
-            var webHookToken = configuration["Discord:WebHookToken"];
+          //  var webHookId = configuration["Discord:WebHookId"];
+          //  var webHookToken = configuration["Discord:WebHookToken"];
 
-            var hookId = configuration["DiscordChangeDataLog:HookID"];
-            var hookToken = configuration["DiscordChangeDataLog:HookToken"];
+          //  var hookId = configuration["DiscordChangeDataLog:HookID"];
+          //  var hookToken = configuration["DiscordChangeDataLog:HookToken"];
 
 
-            Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.Console()
+          //  Log.Logger = new LoggerConfiguration()
+          //  .MinimumLevel.Debug()
+          //  .WriteTo.Console()
 
-            .WriteTo.Discord(
-              webhookId: ulong.Parse(webHookId),
-              webhookToken: webHookToken,
-              restrictedToMinimumLevel: LogEventLevel.Error
-            )
+          //  .WriteTo.Discord(
+          //    webhookId: ulong.Parse(webHookId),
+          //    webhookToken: webHookToken,
+          //    restrictedToMinimumLevel: LogEventLevel.Error
+          //  )
 
-            .WriteTo.Logger(lc => lc
-            .Filter.ByIncludingOnly(le =>
-            le.Level == LogEventLevel.Information &&
-            le.MessageTemplate.Text.Contains("🧑‍💻"))
+          //  .WriteTo.Logger(lc => lc
+          //  .Filter.ByIncludingOnly(le =>
+          //  le.Level == LogEventLevel.Information &&
+          //  le.MessageTemplate.Text.Contains("🧑‍💻"))
 
-              .WriteTo.Discord(
-                  webhookId: ulong.Parse(hookId),
-                  webhookToken: hookToken
-              )
-          )
+          //    .WriteTo.Discord(
+          //        webhookId: ulong.Parse(hookId),
+          //        webhookToken: hookToken
+          //    )
+          //)
 
-          .CreateLogger();
+          //.CreateLogger();
 
             #endregion
 
@@ -182,6 +182,11 @@
                 return ConnectionMultiplexer.Connect(options);
             });
             services.AddScoped<IRedisService, RedisServices>();
+            #endregion
+
+
+            #region Google Drive Configuration
+            services.AddScoped<IGoogleDriveService, GoogleDriveService>();
             #endregion
 
 

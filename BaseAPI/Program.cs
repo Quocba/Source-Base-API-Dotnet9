@@ -151,7 +151,7 @@ builder.Services.AddOpenApi("v1", options =>
 
 #endregion
 
-DependencyInjection.Register(builder.Services, builder.Configuration, new HttpContextAccessor());
+DependencyInjection.Register(builder.Services, builder.Configuration, new HttpContextAccessor(), builder.Environment);
 var app = builder.Build();
 
 app.MapOpenApi();
