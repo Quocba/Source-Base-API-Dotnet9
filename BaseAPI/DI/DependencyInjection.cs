@@ -12,7 +12,6 @@
     using EmailService.Config;
     using EmailService.Implement;
     using EmailService.Interface;
-    using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.GenericRepository;
     using Infrastructure.Service;
