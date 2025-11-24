@@ -173,7 +173,6 @@
             #endregion
 
             #region REDIS
-
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
                 var redisConnectionString = configuration.GetSection("Redis:ConnectionString").Value;
@@ -182,9 +181,7 @@
                 options.AbortOnConnectFail = false;
                 return ConnectionMultiplexer.Connect(options);
             });
-
             services.AddScoped<IRedisService, RedisServices>();
-
             #endregion
 
 
