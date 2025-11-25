@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Infrastructure.UnitOfWork;
 
-public class UnitOfWork<TContext> : IUnitOfWork<TContext> where TContext : DbContext
+public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
 {
     public TContext Context { get; }
     private readonly Dictionary<Type, object> _repositories = new();
@@ -24,7 +24,7 @@ public class UnitOfWork<TContext> : IUnitOfWork<TContext> where TContext : DbCon
         if (_repositories.TryGetValue(type, out var repo))
             return (IGenericRepository<TEntity>)repo;
 
-        var repository = new GenericRepository<TEntity>(Context); 
+        var repository = new GenericRepository<TEntity>(Context);
         _repositories[type] = repository;
         return repository;
     }

@@ -70,7 +70,7 @@ public class GoogleDriveService : IGoogleDriveService
 
             var uploadRequest = _service.Files.Create(metadata, ms, file.ContentType);
             uploadRequest.Fields = "id, name, webViewLink";
-            uploadRequest.SupportsAllDrives = false;
+            uploadRequest.SupportsAllDrives = false; // Không dùng Shared Drive
 
             var result = await uploadRequest.UploadAsync();
 

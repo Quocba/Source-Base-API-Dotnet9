@@ -3,12 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.IUnitOfWork;
 
-public interface IUnitOfWork<TContext> : IDisposable where TContext : DbContext
+public interface IUnitOfWork
 {
-    TContext Context { get; }
-
     IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class;
-
-    int Commit();
     Task<int> CommitAsync();
+    int Commit();
 }

@@ -12,15 +12,18 @@
     using EmailService.Config;
     using EmailService.Implement;
     using EmailService.Interface;
+    using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.GenericRepository;
     using Infrastructure.Service;
     using Infrastructure.UnitOfWork;
     using MassTransit;
+    using MediatR;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Http;
+    using Microsoft.Win32;
     using Newtonsoft.Json;
     using RabbitMQContract.Config;
     using RabbitMQContract.Consumer;
@@ -39,6 +42,13 @@
     {
         public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
+            #region MEDIATR 
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+            });
+            #endregion
+
             #region Service Configuration
             services.AddScoped<IBaseService, BaseService>();
             #endregion
@@ -157,7 +167,11 @@
             #endregion
 
             #region UNIT OF WORK
-            services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
+            services.AddScoped<IUnitOfWork>(provider =>
+            {
+                var context = provider.GetRequiredService<DBContext>();
+                return new UnitOfWork<DBContext>(context);
+            });
             #endregion
 
             #region RATE LIMIT

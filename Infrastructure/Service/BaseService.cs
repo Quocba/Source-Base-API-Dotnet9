@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Service
 {
-    public class BaseService(IUnitOfWork<DBContext> _unitOfWork) : IBaseService
+    public class BaseService(IUnitOfWork _unitOfWork) : IBaseService
     {
         public async Task<ApiResponse<string>> CreateProduct(CreateProductRequest request)
         {
