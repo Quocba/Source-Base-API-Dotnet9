@@ -1,4 +1,5 @@
-﻿using Application.IService;
+﻿using Application.Features.Products.Command.Edit;
+using Application.IService;
 using Application.IUnitOfWork;
 using Application.Payload.Request.Products;
 using Domain.Entities;
@@ -53,6 +54,11 @@ namespace Infrastructure.Service
                 Message = string.Empty,
                 Data = null
             };
+        }
+
+        public Task<ApiResponse<string>> EditProduct(Guid productId, EditProductCommand request)
+        {
+            throw new NotImplementedException();
         }
     }
 }

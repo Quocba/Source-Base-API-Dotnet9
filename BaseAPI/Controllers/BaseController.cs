@@ -3,6 +3,7 @@ using Application.Payload.Request.Products;
 using Infrastructure.Features.Products.Command.Create;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
+using Application.Features.Products.Command.Edit;
 
 namespace API.Controllers
 {
@@ -14,6 +15,20 @@ namespace API.Controllers
         public async Task<IActionResult> CreateProduct([FromBody]CreateProductRequest request)
         {
             var response = await _baseSerivce.CreateProduct(request);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPatch("{productId}")]
+        public async Task<IActionResult> EditProduct(Guid productId, [FromBody] EditProductCommand command)
+        {
+            var request = new EditProductCommand
+            {
+                ProductId = productId,
+                Sku = command.Sku,
+                Name = command.Name,
+                Description = command.Description
+            };
+            var response = await _mediator.Send(request);
             return StatusCode(response.StatusCode, response);
         }
 
