@@ -10,7 +10,7 @@ namespace RabbitMQContract.Consumer.Email
         public EmailConsumer(IEmailSender emailSender)
         {
             _emailSender = emailSender;
-        }
+        }   
 
         public async Task Consume(ConsumeContext<EmailMessage> context)
         {
@@ -21,7 +21,6 @@ namespace RabbitMQContract.Consumer.Email
                 To = message.To,
                 Subject = message.Subject,
                 Body = message.Body
-
             };
 
             await _emailSender.SendEmailAsync(request);

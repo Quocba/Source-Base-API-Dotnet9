@@ -1,4 +1,5 @@
 ﻿using API.Middleware.GlobalLogger;
+using API.Middleware.JWTMidlleware;
 using BaseAPI.DI;
 using BaseAPI.Middleware.JWTMidlleware;
 using Domain.Config;
@@ -175,6 +176,7 @@ app.UseMiddleware<ExceptionLoggingMiddleware>();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseMiddleware<TokenFingerprintMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 
