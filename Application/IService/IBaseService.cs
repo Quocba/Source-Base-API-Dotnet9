@@ -1,5 +1,4 @@
-﻿using Application.Features.Products.Command.Edit;
-using Application.Payload.Request.Products;
+﻿using Application.Payload.Request.Products;
 using Domain.Payload.Base;
 using System;
 using System.Collections.Generic;
@@ -12,6 +11,5 @@ namespace Application.IService
     public interface IBaseService
     {
         Task<ApiResponse<string>> CreateProduct(CreateProductRequest request);
-        Task<ApiResponse<string>> EditProduct(Guid productId, EditProductCommand request);
     }
 }

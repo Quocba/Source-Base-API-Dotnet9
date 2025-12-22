@@ -1,11 +1,15 @@
-﻿namespace API.Middleware.JWTMidlleware
+﻿using Application.IService;
+
+namespace API.Middleware.JWTMidlleware
 {
     public class TokenFingerprintMiddleware
     {
         private readonly RequestDelegate _next;
-        public TokenFingerprintMiddleware(RequestDelegate next)
+        private readonly IJWTService _jwtService;
+        public TokenFingerprintMiddleware(RequestDelegate next, IJWTService jwtService)
         {
             _next = next;
+            _jwtService = jwtService;
         }
         public async Task InvokeAsync(HttpContext context)
         {
@@ -17,7 +21,7 @@
             }
 
             var tokenFp = context.User.FindFirst(c => c.Type == "fp")?.Value;
-            var currentFp = JWTService.GenerateFingerprint(context);
+            var currentFp = _jwtService.GenerateFingerprint(context);
             if (!string.IsNullOrEmpty(tokenFp) &&
                            !string.Equals(tokenFp, currentFp, StringComparison.Ordinal))
             {

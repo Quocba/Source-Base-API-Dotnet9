@@ -20,6 +20,32 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     public async Task<TEntity?> GetByIdAsync(object id) => await _dbSet.FindAsync(id);
     public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
         => await _dbSet.Where(predicate).ToListAsync();
+    public async Task<TEntity?> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+        => await _dbSet.SingleOrDefaultAsync(predicate);
+    public async Task<TEntity?> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, Func<IQueryable<TEntity>, IQueryable<TEntity>> include)
+        => await include(_dbSet).SingleOrDefaultAsync(predicate);
     public void Update(TEntity entity) => _dbSet.Update(entity);
     public void Remove(TEntity entity) => _dbSet.Remove(entity);
+
+    public void DeleteHook(object ID, TEntity entity)
+    {
+        if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+        var type = entity.GetType();
+        var isDeletedProp = type.GetProperty("IsDeleted");
+        if (isDeletedProp == null)
+            throw new InvalidOperationException($"Entity type '{type.Name}' must declare a boolean 'IsDeleted' property for soft-delete/restore.");
+
+        var propType = Nullable.GetUnderlyingType(isDeletedProp.PropertyType) ?? isDeletedProp.PropertyType;
+        if (propType != typeof(bool))
+            throw new InvalidOperationException($"Property 'IsDeleted' on '{type.Name}' must be of type 'bool' or 'bool?'.");
+
+        var currentValue = isDeletedProp.GetValue(entity) as bool?;
+        if (currentValue == true)
+            isDeletedProp.SetValue(entity, false); // Restore
+        else
+            isDeletedProp.SetValue(entity, true);  // Soft-delete
+
+        Update(entity);
+    }
 }

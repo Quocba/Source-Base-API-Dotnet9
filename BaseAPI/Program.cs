@@ -26,7 +26,6 @@ builder.Services.AddSingleton<IApiKeyValidator, ApiKeyValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
-
 #region  HTTP Configuration
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -39,14 +38,13 @@ var httpContextAccessor = builder.Services.BuildServiceProvider()
 #endregion
 
 #region JWT & SCALAR Configuration
-
 var jwtSection = builder.Configuration.GetSection("JwtSettings");
 builder.Services.Configure<JwtSettings>(jwtSection);
+var jwtSettings = jwtSection.Get<JwtSettings>();
+builder.Services.AddSingleton(jwtSettings);
+
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicPermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, AnyPolicyHandler>();
-
-var jwtSettings = jwtSection.Get<JwtSettings>();
-JWTService.Configure(jwtSettings, httpContextAccessor);
 
 builder.Services
     .AddAuthentication(options =>
@@ -172,7 +170,7 @@ app.MapScalarApiReference(options =>
 //app.UseXXssProtection(options => options.EnabledWithBlockMode());
 
 app.UseMiddleware<SecurityMiddleware>();
-app.UseMiddleware<ExceptionLoggingMiddleware>();
+//app.UseMiddleware<ExceptionLoggingMiddleware>();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();

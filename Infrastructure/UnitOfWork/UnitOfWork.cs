@@ -9,13 +9,14 @@ namespace Infrastructure.UnitOfWork;
 
 public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
 {
-    public TContext Context { get; }
+    public DbContext Context => _context;
+    private readonly TContext _context;
     private readonly Dictionary<Type, object> _repositories = new();
     private IDbContextTransaction? _currentTransaction;
 
     public UnitOfWork(TContext context)
     {
-        Context = context;
+        _context = context;
     }
 
     public IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class
@@ -24,7 +25,7 @@ public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
         if (_repositories.TryGetValue(type, out var repo))
             return (IGenericRepository<TEntity>)repo;
 
-        var repository = new GenericRepository<TEntity>(Context);
+        var repository = new GenericRepository<TEntity>(_context);
         _repositories[type] = repository;
         return repository;
     }
@@ -32,18 +33,18 @@ public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
     public int Commit()
     {
         TrackChanges();
-        return Context.SaveChanges();
+        return _context.SaveChanges();
     }
 
     public async Task<int> CommitAsync()
     {
         TrackChanges();
-        return await Context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 
     private void TrackChanges()
     {
-        var errors = Context.ChangeTracker.Entries<IValidatableObject>()
+        var errors = _context.ChangeTracker.Entries<IValidatableObject>()
             .SelectMany(e => e.Entity.Validate(null))
             .Where(e => e != ValidationResult.Success)
             .ToArray();
@@ -59,6 +60,6 @@ public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
     public void Dispose()
     {
         _currentTransaction?.Dispose();
-        Context?.Dispose();
+        _context?.Dispose();
     }
 }

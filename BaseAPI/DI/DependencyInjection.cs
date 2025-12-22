@@ -1,7 +1,7 @@
 ﻿namespace BaseAPI.DI
 {
+    using Application.Features.Auth.Command.Login;
     using Application.IGenericRepository;
-
     using Application.IService;
     using Application.IUnitOfWork;
     using BaseAPI.Middleware.JWTMidlleware;
@@ -12,14 +12,14 @@
     using EmailService.Config;
     using EmailService.Implement;
     using EmailService.Interface;
+    using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.GenericRepository;
-    using Infrastructure.Service;
     using Infrastructure.UnitOfWork;
     using MassTransit;
-    using MediatR;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Http;
     using Microsoft.Win32;
@@ -34,22 +34,23 @@
     using Serilog.Sinks.Discord;
     using StackExchange.Redis;
     using System;
+    using System.Reflection;
     using System.Text;
     using System.Threading.RateLimiting;
-#pragma warning disable
+    #pragma warning disable
     public class DependencyInjection
     {
         public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
-            #region MEDIATR 
+            #region MEDIATOR
             services.AddMediatR(cfg =>
             {
-                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+                cfg.RegisterServicesFromAssembly(typeof(LoginCommandHandle).Assembly);
             });
             #endregion
 
             #region Service Configuration
-            services.AddScoped<IBaseService, BaseService>();
+            services.AddSingleton<IJWTService, JWTService>();
             #endregion
 
             #region Repository Configuration
@@ -110,6 +111,8 @@
             });
 
             services.AddDbContext<QueueDbContext>();
+
+            EnsurePersistentDatabaseConnection(services);
 
             #endregion
 
@@ -205,6 +208,35 @@
             services.AddScoped<IGoogleDriveService, GoogleDriveService>();
             #endregion
 
+            #region CUSTOM MODELSTATE RESPONSE
+            services.Configure<ApiBehaviorOptions>(cf =>
+            {
+                cf.InvalidModelStateResponseFactory = context =>
+                {
+                    var firstError = context.ModelState
+                        .SelectMany(x => x.Value.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .FirstOrDefault();
+
+                    var response = new ApiResponse<object>
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = firstError ?? "Dữ liệu không hợp lệ",
+                        Data = null
+                    };
+
+                    return new BadRequestObjectResult(response);
+                };
+            });
+
+            #endregion
+        }
+
+        private static void EnsurePersistentDatabaseConnection(IServiceCollection services)
+        {
+            using var serviceProvider = services.BuildServiceProvider();
+            var dbContext = serviceProvider.GetRequiredService<DBContext>();
+            dbContext.Database.OpenConnection(); // Open the connection
         }
     }
 }

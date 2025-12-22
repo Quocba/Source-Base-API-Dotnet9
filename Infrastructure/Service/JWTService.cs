@@ -1,27 +1,25 @@
-﻿using Domain.Config;
+﻿using Application.IService;
+using Domain.Config;
 using Domain.Entities;
-using Google.Apis.Drive.v3.Data;
-using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-#pragma warning disable
 
-public static class JWTService
+public class JWTService :  IJWTService
 {
-    private static JwtSettings _jwtSettings;
-    private static IHttpContextAccessor _httpContextAccessor;
-    public static void Configure(JwtSettings settings, IHttpContextAccessor httpContextAccessor)
+    private readonly JwtSettings _jwtSettings;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+
+    public JWTService(JwtSettings settings, IHttpContextAccessor? httpContextAccessor)
     {
         _jwtSettings = settings;
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public static string GenerateToken(User user)
+    public string GenerateToken(User user)
     {
         var httpContext = _httpContextAccessor.HttpContext;
 
@@ -42,32 +40,46 @@ public static class JWTService
 
             fingerprint = GenerateFingerprint(httpContext);
         }
-        //var claims = new List<Claim>
-        //{
-        //    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        //    new Claim(ClaimTypes.Name, user.Username),
-        //    new Claim("ip", ip),
-        //    new Claim("fp", fingerprint)
-        //};
+        var employeeId = user.Employees?.FirstOrDefault()?.Id.ToString() ?? string.Empty;
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, employeeId),
+            new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+            new Claim("ip", ip),
+            new Claim("fp", fingerprint)
+        };
 
-        //if (user.UserTypeNavigation != null)
-        //{
-        //    claims.Add(new Claim(ClaimTypes.Role, user.UserTypeNavigation.Name));
-        //}
+        if (user.Employees.Any() && user.Employees.FirstOrDefault()?.Position != null)
+        {
+            var position = user.Employees.First().Position;
+            claims.Add(new Claim("position", position.Name ?? string.Empty));
 
-        //if (user?.Employee?.Department?.DepartmentPermission != null &&
-        //    user.Employee.Department.DepartmentPermission.Any())
-        //{
-        //    var allowedPermissions = user.Employee.Department.DepartmentPermission
-        //        .Select(dp => $"{NormalizePermissionKey(dp.Permissions.Module)}.{dp.Permissions.Action.ToUpperInvariant()}")
-        //        .ToList();
+            if (position.Permissions.Any())
+            {
+                var positionPermissions = position.Permissions
+                    .Select(p => $"{NormalizePermissionKey(p.Module)}.{p.Action.ToUpperInvariant()}")
+                    .ToList();
 
-        //    if (allowedPermissions.Any())
-        //    {
-        //        claims.Add(new Claim("permission_count", allowedPermissions.Count.ToString()));
-        //        claims.Add(new Claim("permissions", string.Join(",", allowedPermissions)));
-        //    }
-        //}
+                claims.Add(new Claim("position_permission_count", positionPermissions.Count.ToString()));
+                claims.Add(new Claim("position_permissions", string.Join(",", positionPermissions)));
+            }
+        }
+
+        if (user.Employees.Any() && user.Employees.FirstOrDefault()?.Department != null)
+        {
+            var department = user.Employees.First().Department;
+
+            if (department.Employees.Any())
+            {
+                var departmentPermissions = department.Employees
+                    .SelectMany(e => e.Position.Permissions)
+                    .Select(p => $"{NormalizePermissionKey(p.Module)}.{p.Action.ToUpperInvariant()}")
+                    .ToList();
+
+                claims.Add(new Claim("department_permission_count", departmentPermissions.Count.ToString()));
+                claims.Add(new Claim("department_permissions", string.Join(",", departmentPermissions)));
+            }
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -75,7 +87,7 @@ public static class JWTService
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
-            //claims: claims,
+            claims: claims,
             expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             signingCredentials: creds
         );
@@ -83,7 +95,7 @@ public static class JWTService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public static string GenerateFingerprint(HttpContext context)
+    public string GenerateFingerprint(HttpContext context)
     {
         var ua = context.Request.Headers["User-Agent"].ToString();
         var lang = context.Request.Headers["Accept-Language"].ToString();
@@ -96,7 +108,7 @@ public static class JWTService
         return Convert.ToBase64String(sha.ComputeHash(bytes));
     }
 
-    private static string NormalizePermissionKey(string module)
+    private string NormalizePermissionKey(string module)
     {
         if (string.IsNullOrWhiteSpace(module))
             return string.Empty;
@@ -108,7 +120,8 @@ public static class JWTService
 
         return noSpaces.ToUpperInvariant();
     }
-    private static string RemoveDiacritics(string text)
+
+    private string RemoveDiacritics(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return text;
@@ -130,25 +143,24 @@ public static class JWTService
                  .Replace("đ", "d");
     }
 
-    public static string? GetUserId(ClaimsPrincipal user)
+    public string? GetUserId(ClaimsPrincipal user)
     {
         return user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
             ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 
-    public static string? GetUser()
+    public string? GetUser()
     {
         return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
     }
 
-    public static string GenerateActivationToken(string email)
+    public string GenerateActivationToken(string email)
     {
         var claims = new[]
         {
-        new Claim(JwtRegisteredClaimNames.Email, email),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

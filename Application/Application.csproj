@@ -8,15 +8,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\EmailService\EmailService.csproj" />
+    <ProjectReference Include="..\RedisService\RedisService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Products\Queries\" />
-    <Folder Include="Payload\Response\" />
+    <Folder Include="Features\Auth\Queries\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
   </ItemGroup>
 
 </Project>
