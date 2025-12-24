@@ -22,4 +22,10 @@
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Infrastructure">
+      <HintPath>..\Infrastructure\obj\Debug\net9.0\ref\Infrastructure.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

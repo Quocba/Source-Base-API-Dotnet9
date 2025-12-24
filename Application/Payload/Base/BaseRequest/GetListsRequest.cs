@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.Payload.Base.BaseRequest
 {
-    public class GetListsRequest 
+    public class GetListsRequest
     {
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;

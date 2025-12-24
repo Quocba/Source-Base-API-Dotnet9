@@ -1,5 +1,4 @@
-﻿using Domain.Payload.Base;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQContract.Generic;
 using RabbitMQContract.Payload.Request;

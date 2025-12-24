@@ -3,12 +3,12 @@ using Domain.Entities.Enum;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using RabbitMQContract.Generic.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Infrastructure.MessageBus;
 
 namespace Infrastructure.GenericRepository
 {

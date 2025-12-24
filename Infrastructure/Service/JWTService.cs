@@ -8,7 +8,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-public class JWTService :  IJWTService
+public class JWTService : IJWTService
 {
     private readonly JwtSettings _jwtSettings;
     private readonly IHttpContextAccessor? _httpContextAccessor;
@@ -65,21 +65,21 @@ public class JWTService :  IJWTService
             }
         }
 
-        if (user.Employees.Any() && user.Employees.FirstOrDefault()?.Department != null)
-        {
-            var department = user.Employees.First().Department;
+        //if (user.Employees.Any() && user.Employees.FirstOrDefault()?. != null)
+        //{
+        //    var department = user.Employees.First().Department;
 
-            if (department.Employees.Any())
-            {
-                var departmentPermissions = department.Employees
-                    .SelectMany(e => e.Position.Permissions)
-                    .Select(p => $"{NormalizePermissionKey(p.Module)}.{p.Action.ToUpperInvariant()}")
-                    .ToList();
+        //    if (department.Employees.Any())
+        //    {
+        //        var departmentPermissions = department.Employees
+        //            .SelectMany(e => e.Position.Permissions)
+        //            .Select(p => $"{NormalizePermissionKey(p.Module)}.{p.Action.ToUpperInvariant()}")
+        //            .ToList();
 
-                claims.Add(new Claim("department_permission_count", departmentPermissions.Count.ToString()));
-                claims.Add(new Claim("department_permissions", string.Join(",", departmentPermissions)));
-            }
-        }
+        //        claims.Add(new Claim("department_permission_count", departmentPermissions.Count.ToString()));
+        //        claims.Add(new Claim("department_permissions", string.Join(",", departmentPermissions)));
+        //    }
+        //}
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

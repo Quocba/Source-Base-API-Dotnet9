@@ -16,6 +16,7 @@
     using Infrastructure.Context;
     using Infrastructure.GenericRepository;
     using Infrastructure.UnitOfWork;
+    using RabbitMQContract.Generic;
     using MassTransit;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,7 @@
 
             #region Repository Configuration
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IQueueRepository, QueueRepository>();
             #endregion
 
             #region Cache Configuration
