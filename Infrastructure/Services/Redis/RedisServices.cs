@@ -1,10 +1,10 @@
-﻿using Application.Interfaces.Redis;
+using Application.IService.Redis;
 using StackExchange.Redis;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace RedisService.Service
+namespace Infrastructure.Service.Redis
 {
     public class RedisServices : IRedisService
     {

@@ -1,11 +1,10 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
-using EmailService.Config;
 using Application.DTOs.Email;
-using Application.Interfaces.Email;
+using Application.IService.Email;
 using Microsoft.Extensions.Options;
 
-namespace EmailService.Implement
+namespace Infrastructure.Service.Email
 {
     public class EmailSender : IEmailSender
     {

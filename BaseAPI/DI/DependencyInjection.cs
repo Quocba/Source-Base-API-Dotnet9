@@ -12,10 +12,6 @@
     using Domain.Payload.Base;
     using Domain.Share.Common;
     using Elastic.Clients.Elasticsearch;
-    using EmailService.Config;
-    using EmailService.Implement;
-    using Application.Interfaces.Email;
-    using Application.Interfaces.Redis;
     using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.Elasticsearch;
@@ -34,7 +30,6 @@
     using RabbitMQContract.Consumer.Email;
     using RabbitMQContract.Generic;
 
-    using RedisService.Service;
     using Serilog;
     using Serilog.Events;
     using Serilog.Sinks.Discord;
@@ -43,6 +38,8 @@
     using System.Reflection;
     using System.Text;
     using System.Threading.RateLimiting;
+    using Application.IService.Email;
+    using Infrastructure.Service.Email;
 #pragma warning disable
     public class DependencyInjection
     {

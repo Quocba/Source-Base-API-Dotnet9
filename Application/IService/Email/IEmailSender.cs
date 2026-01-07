@@ -1,6 +1,6 @@
 using Application.DTOs.Email;
 
-namespace Application.Interfaces.Email
+namespace Application.IService.Email
 {
     public interface IEmailSender
     {

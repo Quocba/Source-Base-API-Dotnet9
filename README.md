@@ -21,25 +21,20 @@ graph TD
     
     %% Infrastructure & Services
     Infra[Infrastructure]
-    Email[EmailService]
-    Redis[RedisService]
     Rabbit[RabbitMQContract]
     
     %% Dependencies
     API --> App
     API --> Dom
     API --> Infra
-    API --> Email
-    API --> Redis
     API --> Rabbit
     
     Infra --> App
     Infra --> Dom
+    Infra --> Rabbit
     
     App --> Dom
     
-    Email --> App
-    Redis --> App
     Rabbit --> App
     Rabbit --> Dom
     
@@ -47,7 +42,7 @@ graph TD
     classDef core fill:#f9f,stroke:#333,stroke-width:2px;
     classDef infra fill:#9cf,stroke:#333,stroke-width:2px;
     class App,Dom core
-    class Infra,Email,Redis,Rabbit infra
+    class Infra,Rabbit infra
 ```
 
 ### Các Layer Chính:
@@ -68,14 +63,18 @@ graph TD
     *   **Dependency**: **Không** phụ thuộc vào bất kỳ layer nào khác.
 
 *   **Infrastructure**:
-    *   **Vai trò**: Triển khai các logic kỹ thuật, kết nối Database, File System.
-    *   **Thành phần**: DBContext (EF Core), Repository Implementation, UnitOfWork, External APIs Impl (Google Drive).
-    *   **Dependency**: Phụ thuộc vào `Application` (để implement interfaces) và `Domain`.
+    *   **Vai trò**: Triển khai các logic kỹ thuật, kết nối Database, File System, External Services.
+    *   **Thành phần**:
+        *   DBContext (EF Core), Repository Implementation, UnitOfWork.
+        *   **EmailService**: Implement `IEmailSender`.
+        *   **RedisService**: Implement `IRedisService`.
+        *   **JwtService**: Implement auth logic.
+        *   **GoogleDriveService**: External Storage.
+    *   **Dependency**: Phụ thuộc vào `Application` (để implement interfaces), `Domain` và `RabbitMQContract`.
 
-*   **External Services (Plugins)**:
-    *   **EmailService**: Implement `IEmailSender` được định nghĩa trong Application.
-    *   **RedisService**: Implement `IRedisService` được định nghĩa trong Application.
-    *   **RabbitMQContract**: Định nghĩa Consumers xử lý message.
+*   **RabbitMQContract**:
+    *   **Vai trò**: Định nghĩa Consumers xử lý message từ Message Broker.
+    *   **Dependency**: Phụ thuộc vào `Application` và `Domain`.
 
 ---
 
@@ -84,15 +83,23 @@ graph TD
 | Project | Packages Chính | Mục Đích |
 | :--- | :--- | :--- |
 | **Domain** | `Microsoft.EntityFrameworkCore` | Attributes cho Entities. |
-| | `Newtonsoft.Json` | Xử lý JSON chung. |
+| | `Newtonsoft.Json` | Xử lý JSON. |
+| | `MassTransit.RabbitMQ` | Messaging attributes/interfaces. |
+| | `Microsoft.AspNetCore.Authentication.JwtBearer` | Auth related types. |
+| | `HtmlSanitizer` | Security/Sanitization. |
+| | `Serilog` | Logging abstractions. |
 | **Application** | `MediatR` | Pattern CQRS. |
 | | `Dapper` | Truy vấn đọc dữ liệu (Query side). |
-| | `Elastic.Clients.Elasticsearch` | (Lưu ý: Nên wrap bằng Interface nếu muốn strict Clean Arch). |
+| | `Elastic.Clients.Elasticsearch` | Search operations. |
+| | `Microsoft.EntityFrameworkCore.SqlServer` | SQL Specifics (Limit usage here if possible). |
 | **Infrastructure** | `Microsoft.EntityFrameworkCore.SqlServer` | SQL Server Provider. |
 | | `Google.Apis.Drive.v3` | Giao tiếp Google Drive API. |
+| | `StackExchange.Redis` | Redis Implementation. |
 | **BaseAPI** | `AspNetCoreRateLimit` | Rate Limiting. |
 | | `Serilog` | Logging. |
-| | `Swashbuckle` | Swagger Docs. |
+| | `Swashbuckle` / `Scalar` | API Documentation. |
+| | `FluentValidation.AspNetCore` | Validation integration. |
+| | `MaxMind.GeoIP2` | Geo Location functionality. |
 
 ---
 

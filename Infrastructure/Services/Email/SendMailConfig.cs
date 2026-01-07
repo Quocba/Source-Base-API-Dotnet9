@@ -1,4 +1,4 @@
-﻿namespace EmailService.Config
+namespace Infrastructure.Service.Email
 {
     public class SendMailConfig
     {
