@@ -15,11 +15,18 @@ using System.Threading.Tasks;
 #pragma warning disable
 namespace Application.Features.Auth.Command.Login
 {
-    public class LoginCommandHandle(IUnitOfWork.IUnitOfWork _unitOfWork, 
+    public class LoginCommandHandle(IUnitOfWork.IUnitOfWork _unitOfWork,
                                     ILogger<LoginCommand> _logger,
                                     IJWTService _jwtService)
         : IRequestHandler<LoginCommand, ApiResponse<LoginResponse>>
     {
+        /*
+            1. Tìm user trong database theo UserName
+            2. Nếu không tìm thấy, trả về lỗi BadRequest
+            3. Kiểm tra mật khẩu (hash) có khớp không, nếu không khớp trả về lỗi
+            4. Nếu đăng nhập thành công, tạo JWT token
+            5. Trả về thông tin user và token
+        */
         async Task<ApiResponse<LoginResponse>> IRequestHandler<LoginCommand, ApiResponse<LoginResponse>>.Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             try

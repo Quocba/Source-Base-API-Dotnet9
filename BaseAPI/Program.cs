@@ -151,6 +151,19 @@ builder.Services.AddOpenApi("v1", options =>
 
 #endregion
 
+#region CROS
+builder.Services.AddCors(cors =>
+{
+    cors.AddPolicy("Allow", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+#endregion
+
 DependencyInjection.Register(builder.Services, builder.Configuration, new HttpContextAccessor(), builder.Environment);
 var app = builder.Build();
 
@@ -160,15 +173,8 @@ app.MapScalarApiReference(options =>
     options.Theme = ScalarTheme.Saturn;
 });
 
-//app.UseHsts();
-//app.UseXContentTypeOptions();
-//app.UseXfo(options => options.Deny());
-//app.UseCsp(csp => csp
-//    .DefaultSources(s => s.Self())
-//    .ScriptSources(s => s.Self())
-//);
-//app.UseXXssProtection(options => options.EnabledWithBlockMode());
 
+app.UseCors("Allow");
 app.UseMiddleware<SecurityMiddleware>();
 //app.UseMiddleware<ExceptionLoggingMiddleware>();
 app.UseStaticFiles();

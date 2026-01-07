@@ -13,4 +13,7 @@ public interface IGenericRepository<TEntity> where TEntity : class
     void Update(TEntity entity);
     void Remove(TEntity entity);
     void DeleteHook(object ID,TEntity entity);
+    Task<decimal> SumAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, decimal?>> selector);
 }

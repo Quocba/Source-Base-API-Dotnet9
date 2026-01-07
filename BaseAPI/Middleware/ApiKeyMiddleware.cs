@@ -14,7 +14,7 @@ namespace Ecomer_DCS.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, IApiKeyValidator validator)
+        public async Task InvokeAsync(HttpContext context, Domain.KeyHandle.IApiKeyValidator validator)
         {
             // Bỏ qua Swagger
             if (context.Request.Path.StartsWithSegments("/swagger"))

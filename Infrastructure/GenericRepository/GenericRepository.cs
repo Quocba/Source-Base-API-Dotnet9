@@ -47,5 +47,17 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
             isDeletedProp.SetValue(entity, true);  // Soft-delete
 
         Update(entity);
+
+
     }
+
+    public async Task<decimal> SumAsync(
+     Expression<Func<TEntity, bool>> predicate,
+     Expression<Func<TEntity, decimal?>> selector)
+    {
+        return await _dbSet
+            .Where(predicate)
+            .SumAsync(selector) ?? 0;
+    }
+
 }

@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 *.json
 /Domain/Entities/Enum/GenderEnum.cs
+/BaseAPI/appsettings.json

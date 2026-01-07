@@ -1,22 +1,25 @@
 ﻿namespace BaseAPI.DI
 {
+    using Application.Common;
     using Application.Features.Auth.Command.Login;
     using Application.IGenericRepository;
     using Application.IService;
     using Application.IUnitOfWork;
     using BaseAPI.Middleware.JWTMidlleware;
+    using Domain;
     using Domain.Config;
     using Domain.Entities;
     using Domain.Payload.Base;
     using Domain.Share.Common;
+    using Elastic.Clients.Elasticsearch;
     using EmailService.Config;
     using EmailService.Implement;
     using EmailService.Interface;
     using FluentValidation.AspNetCore;
     using Infrastructure.Context;
+    using Infrastructure.Elasticsearch;
     using Infrastructure.GenericRepository;
     using Infrastructure.UnitOfWork;
-    using RabbitMQContract.Generic;
     using MassTransit;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
@@ -28,6 +31,7 @@
     using RabbitMQContract.Config;
     using RabbitMQContract.Consumer;
     using RabbitMQContract.Consumer.Email;
+    using RabbitMQContract.Generic;
     using RedisService.IService;
     using RedisService.Service;
     using Serilog;
@@ -38,7 +42,7 @@
     using System.Reflection;
     using System.Text;
     using System.Threading.RateLimiting;
-    #pragma warning disable
+#pragma warning disable
     public class DependencyInjection
     {
         public static void Register(IServiceCollection services, IConfiguration configuration, HttpContextAccessor contextAccessor, IWebHostEnvironment env)
@@ -195,15 +199,15 @@
             #endregion
 
             #region REDIS
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
-            {
-                var redisConnectionString = configuration.GetSection("Redis:ConnectionString").Value;
+            //services.AddSingleton<IConnectionMultiplexer>(sp =>
+            //{
+            //    var redisConnectionString = configuration.GetSection("Redis:ConnectionString").Value;
 
-                var options = ConfigurationOptions.Parse(redisConnectionString);
-                options.AbortOnConnectFail = false;
-                return ConnectionMultiplexer.Connect(options);
-            });
-            services.AddScoped<IRedisService, RedisServices>();
+            //    var options = ConfigurationOptions.Parse(redisConnectionString);
+            //    options.AbortOnConnectFail = false;
+            //    return ConnectionMultiplexer.Connect(options);
+            //});
+            //services.AddScoped<IRedisService, RedisServices>();
             #endregion
 
             #region Google Drive Configuration
@@ -232,6 +236,25 @@
             });
 
             #endregion
+            #region Elasticsearch
+
+            services.AddSingleton<ElasticsearchClient>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var uri = config["Elasticsearch:Uri"];
+
+                var settings = new ElasticsearchClientSettings(new Uri(uri))
+                    .EnableDebugMode();
+
+                return new ElasticsearchClient(settings);
+            });
+
+            services.AddSingleton<IElasticIndexNameResolver, ElasticIndexNameResolver>();
+
+            services.AddScoped(typeof(IElasticRepository<>), typeof(ElasticRepository<>));
+
+            #endregion
+
         }
 
         private static void EnsurePersistentDatabaseConnection(IServiceCollection services)

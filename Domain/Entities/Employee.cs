@@ -43,17 +43,7 @@ public partial class Employee
 
     public Guid? WareHouseId { get; set; }
 
-    public virtual Employee? CreatedByNavigation { get; set; }
-
-
-    public virtual ICollection<Employee> InverseCreatedByNavigation { get; set; } = new List<Employee>();
-
-    public virtual ICollection<Employee> InverseLastModifiedByNavigation { get; set; } = new List<Employee>();
-
-    public virtual Employee? LastModifiedByNavigation { get; set; }
-
-
-    public virtual Position Position { get; set; } = null!;
-
+    public virtual Position Position { get; set; }
+    public virtual Department Department { get; set; }
    
 }

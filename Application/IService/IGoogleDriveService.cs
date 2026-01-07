@@ -1,5 +1,3 @@
-﻿using Application.Payload.Request.Uploads;
-using Domain.Payload.Base;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -7,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.IService
+namespace Domain
 {
     public interface IGoogleDriveService
     {
@@ -16,6 +14,6 @@ namespace Application.IService
         /// </summary>
         /// <param name="file">IFormFile từ client</param>
         /// <returns>URL public file trên Google Drive</returns>
-        Task<ApiResponse<string>> UploadAsync(UploadRequest request);
+        //Task<ApiResponse<string>> UploadAsync(UploadRequest request);
     }
 }

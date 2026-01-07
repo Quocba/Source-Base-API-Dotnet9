@@ -73,6 +73,7 @@ namespace RabbitMQContract.Generic
                         var idToken = j[keyProp.Name] ?? j["Id"] ?? j["ID"] ?? j["id"];
                         if (idToken == null) continue;
 
+                        Console.WriteLine($"DEBUG: idToken Type: {idToken.Type}, Value: '{idToken}', ToString: '{idToken.ToString()}', ClrType: {keyProp.ClrType}");
                         var idVal = Convert.ChangeType(idToken.ToString(), keyProp.ClrType);
                         var entity = await db.FindAsync(entityType, idVal);
 
@@ -96,11 +97,20 @@ namespace RabbitMQContract.Generic
             }
             catch (DbUpdateException dbEx)
             {
-                Console.WriteLine($"💥 Lỗi khi SaveChanges: {dbEx.InnerException?.Message ?? dbEx.Message}");
+                Console.WriteLine($"💥 Lỗi khi SaveChanges cho {entityType.Name}: {dbEx.InnerException?.Message ?? dbEx.Message}");
+                // Log more details
+                foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State != EntityState.Unchanged))
+                {
+                    var pk = entry.Metadata.FindPrimaryKey();
+                    var keyString = pk != null
+                        ? string.Join(", ", pk.Properties.Select(p => $"{p.Name}={entry.Property(p.Name).CurrentValue}"))
+                        : "N/A";
+                    Console.WriteLine($"Entity: {entry.Entity.GetType().Name}, State: {entry.State}, Key: {keyString}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"💥 Lỗi không xác định: {ex.Message}");
+                Console.WriteLine($"💥 Lỗi không xác định cho {entityType.Name}: {ex.Message}");
             }
         }
 

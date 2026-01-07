@@ -14,19 +14,32 @@ namespace Infrastructure.Context
         {
         }
 
+
+
+
+        public virtual DbSet<Department> Departments { get; set; }
+
         public virtual DbSet<Employee> Employees { get; set; }
         public virtual DbSet<Permission> Permissions { get; set; }
+
         public virtual DbSet<Position> Positions { get; set; }
+
+      
         public virtual DbSet<User> Users { get; set; }
 
 
-        //public virtual DbSet<WareHouseEmployee> WareHouseEmployees { get; set; }
 
-    
+       
+
+        //public virtual DbSet<WareHouseRice> WareHouseRice { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+
+           
+
             OnModelCreatingPartial(modelBuilder);
         }
 

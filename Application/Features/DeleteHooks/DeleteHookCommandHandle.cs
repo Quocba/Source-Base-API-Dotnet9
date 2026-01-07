@@ -14,7 +14,16 @@ namespace Application.Features.DeleteHooks
                                          IJWTService _jwtService)
     : IRequestHandler<DeleteHookCommand, ApiResponse<string>>
     {
-        public async  Task<ApiResponse<string>> Handle(DeleteHookCommand request, CancellationToken cancellationToken)
+        /*
+            1. Validate request
+            2. Xác định Entity Type từ tên Entity trong request
+            3. Dùng Reflection để lấy Repository tương ứng với Entity Type
+            4. Tìm Entity theo Id, nếu không thấy trả về lỗi NotFound
+            5. Gọi method DeleteHook của repository (thực hiện xóa mềm hoặc khôi phục)
+            6. Lưu thay đổi vào database
+            7. Trả về thông báo thành công (Xóa mềm hoặc Khôi phục)
+        */
+        public async Task<ApiResponse<string>> Handle(DeleteHookCommand request, CancellationToken cancellationToken)
         {
             if (request == null)
             {
