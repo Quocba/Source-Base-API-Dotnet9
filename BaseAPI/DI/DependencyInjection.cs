@@ -14,7 +14,8 @@
     using Elastic.Clients.Elasticsearch;
     using EmailService.Config;
     using EmailService.Implement;
-    using EmailService.Interface;
+    using Application.Interfaces.Email;
+    using Application.Interfaces.Redis;
     using FluentValidation.AspNetCore;
     using Infrastructure.Context;
     using Infrastructure.Elasticsearch;
@@ -32,7 +33,7 @@
     using RabbitMQContract.Consumer;
     using RabbitMQContract.Consumer.Email;
     using RabbitMQContract.Generic;
-    using RedisService.IService;
+
     using RedisService.Service;
     using Serilog;
     using Serilog.Events;
@@ -132,39 +133,39 @@
             services.Configure<RabbitMQConfig>(configuration.GetSection("RabbitMQ"));
             var rabbitSettings = configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
 
-                services.AddMassTransit(x =>
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumer<EmailConsumer>();
+                x.AddConsumer<EmailSendFileConsumer>();
+                x.AddConsumer<DbActionConsumer>();
+                x.AddConsumer<GenericQueueConsumer>();
+                x.UsingRabbitMq((context, cfg) =>
                 {
-                    x.AddConsumer<EmailConsumer>();
-                    x.AddConsumer<EmailSendFileConsumer>();
-                    x.AddConsumer<DbActionConsumer>();
-                    x.AddConsumer<GenericQueueConsumer>();
-                    x.UsingRabbitMq((context, cfg) =>
+                    cfg.Host(rabbitSettings.HostName, rabbitSettings.VirtualHost, h =>
                     {
-                        cfg.Host(rabbitSettings.HostName, rabbitSettings.VirtualHost, h =>
-                        {
-                            h.Username(rabbitSettings.UserName);
-                            h.Password(rabbitSettings.Password);
-                        });
-
-                        cfg.ReceiveEndpoint("email-queue", e =>
-                        {
-                            e.ConfigureConsumer<EmailConsumer>(context);
-                        });
-
-                        cfg.ReceiveEndpoint("email-send-file", e =>
-                        {
-                            e.ConfigureConsumer<EmailSendFileConsumer>(context);
-                        });
-
-                        cfg.ReceiveEndpoint("generic-queue", e =>
-                        {
-                            e.ConfigureConsumer<GenericQueueConsumer>(context);
-                            e.PrefetchCount = 20;
-                            e.ConcurrentMessageLimit = 10;
-                        });
-
+                        h.Username(rabbitSettings.UserName);
+                        h.Password(rabbitSettings.Password);
                     });
+
+                    cfg.ReceiveEndpoint("email-queue", e =>
+                    {
+                        e.ConfigureConsumer<EmailConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("email-send-file", e =>
+                    {
+                        e.ConfigureConsumer<EmailSendFileConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint("generic-queue", e =>
+                    {
+                        e.ConfigureConsumer<GenericQueueConsumer>(context);
+                        e.PrefetchCount = 20;
+                        e.ConcurrentMessageLimit = 10;
+                    });
+
                 });
+            });
 
 
             #endregion

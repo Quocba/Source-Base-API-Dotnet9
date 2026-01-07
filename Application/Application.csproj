@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
-    <ProjectReference Include="..\EmailService\EmailService.csproj" />
-    <ProjectReference Include="..\RedisService\RedisService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,12 +19,9 @@
     <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.2.2" />
     <PackageReference Include="MediatR" Version="14.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Infrastructure">
-      <HintPath>..\Infrastructure\obj\Debug\net9.0\ref\Infrastructure.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+
 
 </Project>

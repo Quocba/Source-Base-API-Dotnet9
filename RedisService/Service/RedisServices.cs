@@ -1,4 +1,4 @@
-﻿using RedisService.IService;
+﻿using Application.Interfaces.Redis;
 using StackExchange.Redis;
 using System;
 using System.Text.Json;

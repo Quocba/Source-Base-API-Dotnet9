@@ -1,5 +1,5 @@
-﻿using EmailService.DTO;
-using EmailService.Interface;
+﻿using Application.DTOs.Email;
+using Application.Interfaces.Email;
 using MassTransit;
 using RabbitMQContract.Payload.Request;
 using System;

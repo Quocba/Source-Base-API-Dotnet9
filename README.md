@@ -4,63 +4,95 @@ Tài liệu này mô tả chi tiết kiến trúc, các thành phần và hướ
 
 ## 1. Tổng Quan Kiến Trúc (Architecture Overview)
 
-Dự án được xây dựng dựa trên kiến trúc **Clean Architecture** kết hợp với **CQRS** (Command Query Responsibility Segregation) sử dụng MediatR. Sơ đồ phụ thuộc giữa các tầng như sau:
+Dự án được xây dựng dựa trên kiến trúc **Clean Architecture** kết hợp với **CQRS** (Command Query Responsibility Segregation) sử dụng MediatR.
+
+Kiến trúc tuân thủ **Dependency Rule**: các dependency chỉ hướng vào bên trong. Core Layer (Domain, Application) không phụ thuộc vào Infrastructure hay External Services.
+
+### Sơ Đồ Phụ Thuộc (Dependency Graph)
 
 ```mermaid
 graph TD
-    API["BaseAPI (Presentation)"] --> Application
-    API --> Domain
-    API --> Infrastructure
-    API --> RabbitMQContract
-    API --> RedisService
-    API --> EmailService
+    %% Presentation Layer
+    API["BaseAPI (Presentation)"]
     
-    Infrastructure --> Application
-    Infrastructure --> Domain
-    Infrastructure --> RabbitMQContract
+    %% Core Layers
+    App[Application Layer]
+    Dom[Domain Layer]
     
-    Application --> Domain
-    Application --> RedisService
-    Application --> EmailService
+    %% Infrastructure & Services
+    Infra[Infrastructure]
+    Email[EmailService]
+    Redis[RedisService]
+    Rabbit[RabbitMQContract]
     
-    RedisService --> Domain
-    RabbitMQContract --> Domain
-    RabbitMQContract --> EmailService
+    %% Dependencies
+    API --> App
+    API --> Dom
+    API --> Infra
+    API --> Email
+    API --> Redis
+    API --> Rabbit
+    
+    Infra --> App
+    Infra --> Dom
+    
+    App --> Dom
+    
+    Email --> App
+    Redis --> App
+    Rabbit --> App
+    Rabbit --> Dom
+    
+    %% Styling
+    classDef core fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef infra fill:#9cf,stroke:#333,stroke-width:2px;
+    class App,Dom core
+    class Infra,Email,Redis,Rabbit infra
 ```
+
 ### Các Layer Chính:
 
-*   **BaseAPI (API Layer)**: Entry point của ứng dụng. Chứa Controllers, Middleware, Configuration (DI, Serilog, JWT, Swagger, etc.).
-*   **Application**: Chứa business logic. Sử dụng Pattern CQRS với `MediatR` (Commands, Queries, Handle). Định nghĩa Interfaces cho Repository, Services.
-*   **Domain**: Chứa Entities, Enums, Constants, Interfaces cho các core service. Không phụ thuộc vào các layer khác.
-*   **Infrastructure**: Triển khai các Interfaces từ Application. Chứa DBContext (EF Core), Repository Implementation, UnitOfWork, External Services (Google Drive, etc.).
-*   **RabbitMQContract**: Định nghĩa các Contracts (Messages) và Consumers để xử lý message từ RabbitMQ.
-*   **RedisService**: Service wrapper cho StackExchange.Redis để quản lý Cache.
-*   **EmailService**: Service chuyên biệt để gửi Email.
+*   **BaseAPI (Presentation Layer)**:
+    *   **Vai trò**: Entry point của ứng dụng.
+    *   **Thành phần**: Controllers, Middleware, Configuration (DI, Serilog, JWT, Swagger).
+    *   **Dependency**: Phụ thuộc vào tất cả các project khác để thực hiện Dependency Injection (wiring up).
+
+*   **Application (Core Layer)**:
+    *   **Vai trò**: Chứa business logic, use cases.
+    *   **Thành phần**: CQRS Handlers (MediatR), DTOs, Validation, **Interfaces** (Abstractions) cho Infrastructure/Services.
+    *   **Dependency**: Chỉ phụ thuộc vào `Domain`. **Không** phụ thuộc vào Infrastructure/Database/External libs.
+
+*   **Domain (Core Layer)**:
+    *   **Vai trò**: Trái tim của hệ thống.
+    *   **Thành phần**: Entities, Value Objects, Enums, Constants, Domain Exceptions.
+    *   **Dependency**: **Không** phụ thuộc vào bất kỳ layer nào khác.
+
+*   **Infrastructure**:
+    *   **Vai trò**: Triển khai các logic kỹ thuật, kết nối Database, File System.
+    *   **Thành phần**: DBContext (EF Core), Repository Implementation, UnitOfWork, External APIs Impl (Google Drive).
+    *   **Dependency**: Phụ thuộc vào `Application` (để implement interfaces) và `Domain`.
+
+*   **External Services (Plugins)**:
+    *   **EmailService**: Implement `IEmailSender` được định nghĩa trong Application.
+    *   **RedisService**: Implement `IRedisService` được định nghĩa trong Application.
+    *   **RabbitMQContract**: Định nghĩa Consumers xử lý message.
 
 ---
 
 ## 2. Project & Package Dependencies
 
-Dưới đây là danh sách các NuGet Package chính được sử dụng trong từng Project:
-
 | Project | Packages Chính | Mục Đích |
 | :--- | :--- | :--- |
-| **BaseAPI** | `AspNetCoreRateLimit` | Giới hạn số lượng request (Rate Limiting). |
-| | `FluentValidation.AspNetCore` | Validation dữ liệu đầu vào. |
-| | `Serilog`, `Serilog.Sinks.*` | Ghi log (File, Console, Discord). |
-| | `Swashbuckle.AspNetCore` | Swagger UI/OpenAPI. |
-| | `Microsoft.AspNetCore.Authentication.JwtBearer` | Xác thực JWT. |
-| | `StackExchange.Redis` | Client Redis. |
-| **Application** | `MediatR` | Triển khai pattern Mediator (CQRS). |
-| | `Dapper` | Micro-ORM cho các truy vấn hiệu năng cao. |
-| | `Elastic.Clients.Elasticsearch` | Client cho Elasticsearch. |
-| **Domain** | `Microsoft.EntityFrameworkCore` | ORM Framework. |
-| | `MassTransit.RabbitMQ` | Library làm việc với message broker RabbitMQ. |
-| | `Newtonsoft.Json` | Xử lý JSON. |
-| **Infrastructure** | `Google.Apis.Drive.v3` | Tích hợp Google Drive API. |
-| **RabbitMQContract** | `MassTransit.RabbitMQ` | Cấu hình MassTransit và RabbitMQ. |
-| **RedisService** | `StackExchange.Redis` | Thư viện giao tiếp Redis. |
-| **EmailService** | `Microsoft.AspNetCore.Identity.UI` | Hỗ trợ Identity UI (nếu dùng). |
+| **Domain** | `Microsoft.EntityFrameworkCore` | Attributes cho Entities. |
+| | `Newtonsoft.Json` | Xử lý JSON chung. |
+| **Application** | `MediatR` | Pattern CQRS. |
+| | `Dapper` | Truy vấn đọc dữ liệu (Query side). |
+| | `Elastic.Clients.Elasticsearch` | (Lưu ý: Nên wrap bằng Interface nếu muốn strict Clean Arch). |
+| **Infrastructure** | `Microsoft.EntityFrameworkCore.SqlServer` | SQL Server Provider. |
+| | `Google.Apis.Drive.v3` | Giao tiếp Google Drive API. |
+| **BaseAPI** | `AspNetCoreRateLimit` | Rate Limiting. |
+| | `Serilog` | Logging. |
+| | `Swashbuckle` | Swagger Docs. |
 
 ---
 
@@ -69,77 +101,24 @@ Dưới đây là danh sách các NuGet Package chính được sử dụng tron
 Dự án sử dụng **MassTransit** để làm việc với **RabbitMQ**.
 
 ### Cấu Hình
-Cấu hình RabbitMQ nằm trong `appsettings.json` và được mapping vào class `RabbitMQConfig`.
+Cấu hình trong `appsettings.json` mapping vào `RabbitMQConfig`.
 
-```json
-"RabbitMQ": {
-  "HostName": "localhost",
-  "UserName": "guest",
-  "Password": "guest",
-  "Port": 5672,
-  "VirtualHost": "/"
-}
-```
+### Workflow
+1.  **Application** gửi message thông qua `IPublishEndpoint` (của MassTransit) hoặc qua Bus abstraction.
+2.  **RabbitMQContract** chứa các `Consumer` đăng ký nhận message từ Queue.
+3.  **Dependency Injection**: Consumer được đăng ký tại `BaseAPI`.
 
-### Các Consumers
-Hệ thống đã định nghĩa sẵn các Consumers để xử lý message trong `BaseAPI/DI/DependencyInjection.cs`:
+---
 
-1.  **EmailConsumer** (Queue: `email-queue`): Xử lý việc gửi email thông thường.
-2.  **EmailSendFileConsumer** (Queue: `email-send-file`): Xử lý gửi email kèm file đính kèm.
-3.  **GenericQueueConsumer** (Queue: `generic-queue`): Xử lý các tác vụ chung khác (có cấu hình prefetch count).
-4.  **DbActionConsumer**: Xử lý các tác vụ liên quan đến Database action (nếu có).
+## 4. Hướng Dẫn Setup & Chạy
 
-### Cách Thêm Consumer Mới
-1.  Tạo class Consumer mới trong `RabbitMQContract/Consumer`.
-2.  Đăng ký Consumer trong `BaseAPI/DI/DependencyInjection.cs`:
-    ```csharp
-    x.AddConsumer<MyNewConsumer>();
-    // ...
-    cfg.ReceiveEndpoint("my-new-queue", e =>
-    {
-        e.ConfigureConsumer<MyNewConsumer>(context);
-    });
+1.  **Prerequisites**: SDK .NET 9, SQL Server, RabbitMQ, Redis.
+2.  **Config**: Update connection strings trong `appsettings.json`.
+3.  **Migration**:
+    ```bash
+    dotnet ef database update --project Infrastructure --startup-project BaseAPI
     ```
-
----
-
-## 4. Các Service Khác
-
-### Elasticsearch
-*   Sử dụng `Elastic.Clients.Elasticsearch`.
-*   Cấu hình URI trong `appsettings.json`.
-*   Đăng ký Interface `IElasticRepository<>` để thao tác với Elasticsearch.
-
-### Redis Cache
-*   Sử dụng `StackExchange.Redis`.
-*   Có service `GenericCacheInvalidator` để quản lý việc xóa cache.
-
-### Google Drive
-*   Tích hợp sẵn `GoogleDriveService` để upload/quản lý file trên Google Drive.
-
----
-
-## 5. Hướng Dẫn Setup & Chạy
-
-1.  **Cài đặt Prerequisite**:
-    *   .NET 9 SDK
-    *   SQL Server
-    *   RabbitMQ
-    *   Redis
-    *   Elasticsearch (nếu cần dùng tính năng tìm kiếm nâng cao)
-
-2.  **Cấu hình**:
-    *   Mở `BaseAPI/appsettings.json`.
-    *   Cập nhật `ConnectionStrings:DefaultConnection`.
-    *   Cập nhật cấu hình `RabbitMQ`, `Redis`, `Elasticsearch`.
-
-3.  **Database Migration**:
-    *   Chạy lệnh EF Core migration: `dotnet ef database update --project Infrastructure --startup-project BaseAPI`.
-
-4.  **Chạy Ứng Dụng**:
-    *   Set `BaseAPI` là Startup Project.
-    *   Chạy Visual Studio hoặc `dotnet run`.
-    *   Truy cập Swagger tại `/swagger/index.html` hoặc Scalar API Reference.
+4.  **Run**: Set `BaseAPI` as Startup Project.
 
 ---
 *Generated by Antigravity*

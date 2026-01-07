@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EmailService.DTO
+namespace Application.DTOs.Email
 {
     public class EmailRequest<T>
     {

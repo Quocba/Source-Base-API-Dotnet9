@@ -1,5 +1,5 @@
-﻿using EmailService.DTO;
-using EmailService.Interface;
+﻿using Application.DTOs.Email;
+using Application.Interfaces.Email;
 using MassTransit;
 
 namespace RabbitMQContract.Consumer.Email
@@ -10,7 +10,7 @@ namespace RabbitMQContract.Consumer.Email
         public EmailConsumer(IEmailSender emailSender)
         {
             _emailSender = emailSender;
-        }   
+        }
 
         public async Task Consume(ConsumeContext<EmailMessage> context)
         {

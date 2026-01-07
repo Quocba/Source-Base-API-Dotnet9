@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using EmailService.Config;
-using EmailService.DTO;
-using EmailService.Interface;
+using Application.DTOs.Email;
+using Application.Interfaces.Email;
 using Microsoft.Extensions.Options;
 
 namespace EmailService.Implement

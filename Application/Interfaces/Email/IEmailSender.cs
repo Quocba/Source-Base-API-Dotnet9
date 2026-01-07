@@ -1,6 +1,6 @@
-﻿using EmailService.DTO;
+using Application.DTOs.Email;
 
-namespace EmailService.Interface
+namespace Application.Interfaces.Email
 {
     public interface IEmailSender
     {
