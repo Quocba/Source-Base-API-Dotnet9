@@ -8,7 +8,7 @@ Dự án được xây dựng dựa trên kiến trúc **Clean Architecture** k�
 
 ```mermaid
 graph TD
-    API[BaseAPI (Presentation)] --> Application
+    API["BaseAPI (Presentation)"] --> Application
     API --> Domain
     API --> Infrastructure
     API --> RabbitMQContract
